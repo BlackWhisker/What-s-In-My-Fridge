@@ -128,28 +128,53 @@ with tab1:
     )
 
 # ---------------------------------------------------------
-# TAB 2: เมนูอาหารที่ทำได้
+# TAB 2: เมนูอาหารที่ทำได้ (ปรับปรุงระบบ Match คำ)
 # ---------------------------------------------------------
 with tab2:
     st.subheader("🍳 เมนูที่สามารถทำได้จากวัตถุดิบในตู้")
     
     valid_fridge = df_fridge.dropna(subset=['ExpireDate'])
-    available_items = set(valid_fridge[valid_fridge['ExpireDate'] > today]['ItemName'].astype(str).str.strip().str.lower())
     
+    # 1. ดึงรายการวัตถุดิบที่ยังไม่หมดอายุ
+    available_items = valid_fridge[valid_fridge['ExpireDate'] > today]['ItemName'].astype(str).str.strip().str.lower().tolist()
+    
+    # 2. ฟังก์ชันตรวจสอบว่าวัตถุดิบที่มี สามารถใช้แทนวัตถุดิบที่สูตรต้องการได้หรือไม่
+    def is_ingredient_available(required_item, available_list):
+        required_item = required_item.strip().lower()
+        
+        for item in available_list:
+            # ตรวจสอบการซ้อนกันของคำ (เช่น 'ไข่เป็ด' มีคำว่า 'ไข่')
+            if required_item in item or item in required_item:
+                return True
+            
+            # กลุ่มคำที่ใช้แทนกันได้ (Synonym Mapping)
+            if "ไข่" in required_item and "ไข่" in item:  # ไข่ไก่, ไข่เป็ด, ไข่เค็ม
+                return True
+            if "หมู" in required_item and "หมู" in item:  # หมูสับ, หมูชิ้น, หมูกรอบ
+                return True
+            if "ไก่" in required_item and "ไก่" in item:  # น่องไก่, อกไก่
+                return True
+                
+        return False
+
     match_found = False
     
     for idx, row in df_recipes.iterrows():
         menu_name = row['MenuName']
         required_ingredients = [i.strip().lower() for i in str(row['Ingredients']).split(',')]
         
-        missing_items = [item for item in required_ingredients if item not in available_items]
+        # ค้นหาวัตถุดิบที่ยังขาดอยู่
+        missing_items = []
+        for req in required_ingredients:
+            if not is_ingredient_available(req, available_items):
+                missing_items.append(req)
         
         # แสดงผลเมนูในรูปแบบ Card / Expander
         if len(missing_items) == 0:
             with st.container():
                 st.success(f"### ✅ **{menu_name}**")
                 st.write(f"**วัตถุดิบที่ต้องใช้:** {row['Ingredients']}")
-                st.caption("🎉 วัตถุดิบครบถ้วน พร้อมทำทานได้เลย!")
+                st.caption("🎉 วัตถุดิบครบถ้วน (หรือใช้ส่วนผสมทดแทนกันได้) พร้อมทำทานได้เลย!")
                 st.markdown("---")
             match_found = True
             
@@ -163,7 +188,6 @@ with tab2:
 
     if not match_found:
         st.info("ℹ️ ยังไม่มีเมนูที่วัตถุดิบพอ ลองเพิ่มวัตถุดิบใหม่ หรือเพิ่มสูตรอาหารใน Google Sheets ดูนะ!")
-
 # ---------------------------------------------------------
 # TAB 3: Google Form สำหรับเพิ่มวัตถุดิบ
 # ---------------------------------------------------------
