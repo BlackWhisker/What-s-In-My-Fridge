@@ -398,7 +398,7 @@ with st.sidebar:
 
     
 
-    if st.button("🔄 อัปเดตข้อมูลล่าสุด", use_container_width=True, type="primary"):
+    if st.button("🔄 อัปเดตข้อมูลล่าสุด", use_container_width=True, type="primary", key="btn_refresh_data"):
 
         st.cache_data.clear()
 
