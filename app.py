@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLnHKcQaf_6RAp8R6IicD6rmjJvdIviHPaBZOqC9apTbrhXHPnKH9L_aDfkPuJ0jgj/exec"
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxAuB-YvBb4ayGy_enBR1noGroR_UMJK27UiUi2ODnsA93XRTxiQmG5_0ioQ-oFECq5/exec"
 SPREADSHEET_ID = "15oyRCsrlzCvWqlLckWeZRn5cLvJDGqSjweISz3fegus"
 URL_INVENTORY = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Stock"
 URL_RECIPES = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Recipes"
