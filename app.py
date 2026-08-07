@@ -149,6 +149,32 @@ with tab1:
                         st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ: {e}")
     else:
         st.info("ไม่มีวัตถุดิบในตู้เย็นให้ลบ")
+
+if st.button("🗑️ ยืนยันการตัดสต็อก", type="primary", use_container_width=True):
+    if WEB_APP_URL == "https://script.google.com/macros/s/AKfycbxAuB-YvBb4ayGy_enBR1noGroR_UMJK27UiUi2ODnsA93XRTxiQmG5_0ioQ-oFECq5/exec":
+        st.error("กรุณาใส่ Web App URL ก่อนครับ")
+    else:
+        payload = {
+            "action": "delete", 
+            "itemName": item_to_delete,
+            "quantity": int(delete_qty)
+        }
+        try:
+            # ยิง POST ไปที่ Google Apps Script โดยอนุญาต redirect
+            res = requests.post(
+                WEB_APP_URL, 
+                data=json.dumps(payload),
+                headers={"Content-Type": "text/plain;charset=utf-8"} # เปลี่ยน Header เพื่อหลีกเลี่ยง CORS/Preflight issue
+            )
+            
+            if res.status_code == 200:
+                st.success(f"ตัด '{item_to_delete}' ออกไป {delete_qty} {unit_label} เรียบร้อยแล้ว!")
+                st.cache_data.clear()
+                st.rerun()
+            else:
+                st.error(f"เกิดข้อผิดพลาดในการส่งข้อมูล (Status: {res.status_code})")
+        except Exception as e:
+            st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ: {e}")
 # ---------------------------------------------------------
 # TAB 2: เมนูอาหารแนะนำ (ระบบ Match คำ)
 # ---------------------------------------------------------
