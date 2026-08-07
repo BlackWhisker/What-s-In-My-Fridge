@@ -150,7 +150,7 @@ with tab1:
     else:
         st.info("ไม่มีวัตถุดิบในตู้เย็นให้ลบ")
 
-if st.button("🗑️ ยืนยันการตัดสต็อก", type="primary", use_container_width=True):
+if st.button("🗑️ ยืนยันการตัดสต็อก", type="primary", use_container_width=True, key="btn_delete_stock"):
     if WEB_APP_URL == "https://script.google.com/macros/s/AKfycbxAuB-YvBb4ayGy_enBR1noGroR_UMJK27UiUi2ODnsA93XRTxiQmG5_0ioQ-oFECq5/exec":
         st.error("กรุณาใส่ Web App URL ก่อนครับ")
     else:
