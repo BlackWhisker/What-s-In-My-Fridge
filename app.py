@@ -63,8 +63,10 @@ tab1, tab2, tab3 = st.tabs(["📦 ของในตู้เย็น & จั�
 
 today = datetime.now().date()
 
+import json
+
 # ---------------------------------------------------------
-# TAB 1: แสดงของในตู้ + ปุ่มกดลบ
+# TAB 1: แสดงของในตู้ + ลบแบบระบุจำนวน
 # ---------------------------------------------------------
 with tab1:
     warning_days = today + timedelta(days=3)
@@ -94,30 +96,59 @@ with tab1:
         hide_index=True
     )
 
-    # --- ปุ่มสั่งลบวัตถุดิบออกจากตู้เย็น ---
+    # --- ส่วนที่ปรับปรุง: ลบระบุจำนวนที่ต้องการ ---
     st.markdown("---")
-    st.subheader("🗑️ ลบวัตถุดิบออกจากตู้เย็น")
-    col_del1, col_del2 = st.columns([3, 1])
+    st.subheader("🗑️ ลบ/ตัดจำนวนวัตถุดิบออกจากตู้")
     
-    with col_del1:
-        item_to_delete = st.selectbox("เลือกรายการที่ต้องการลบ:", df_fridge['ItemName'].tolist())
-    with col_del2:
-        st.write("")
-        st.write("")
-        if st.button("🗑️ ยืนยันการลบ", type="primary", use_container_width=True):
-            if WEB_APP_URL == "วาง_WEB_APP_URL_ของคุณตรงนี้":
-                st.error("กรุณาใส่ Web App URL ก่อนครับ")
-            else:
-                # ส่งคำสั่ง Delete ไปบันทึกลงแผ่นงาน Form
-                payload = {"action": "delete", "itemName": item_to_delete}
-                res = requests.post(WEB_APP_URL, json=payload)
-                if res.status_code == 200:
-                    st.success(f"ส่งคำสั่งลบ '{item_to_delete}' เรียบร้อยแล้ว!")
-                    st.cache_data.clear()
-                    st.rerun()
+    if not df_fridge.empty:
+        col_del1, col_del2, col_del3 = st.columns([3, 2, 2])
+        
+        with col_del1:
+            item_to_delete = st.selectbox("เลือกรายการวัตถุดิบ:", df_fridge['ItemName'].tolist())
+            
+            # ดึงข้อมูลจำนวนปัจจุบันและหน่วยของวัตถุดิบที่เลือกมาแสดง
+            selected_row = df_fridge[df_fridge['ItemName'] == item_to_delete].iloc[0]
+            current_qty = int(selected_row['Quantity'])
+            unit_label = selected_row['Unit']
+            
+        with col_del2:
+            # ช่องกรอกจำนวนที่ต้องการลบ (กำหนด max_value ไม่เกินจำนวนที่มีอยู่จริง)
+            delete_qty = st.number_input(
+                f"จำนวนที่จะลบ ({unit_label}):", 
+                min_value=1, 
+                max_value=max(current_qty, 1), 
+                value=1
+            )
+            
+        with col_del3:
+            st.write("")
+            st.write("")
+            if st.button("🗑️ ยืนยันการตัดสต็อก", type="primary", use_container_width=True):
+                if WEB_APP_URL == "วาง_WEB_APP_URL_ของคุณตรงนี้":
+                    st.error("กรุณาใส่ Web App URL ก่อนครับ")
                 else:
-                    st.error("เกิดข้อผิดพลาดในการส่งข้อมูล")
-
+                    payload = {
+                        "action": "delete", 
+                        "itemName": item_to_delete,
+                        "quantity": delete_qty
+                    }
+                    try:
+                        # ใช้ json.dumps + headers เพื่อป้องกันปัญหา Redirect Error ของ Google Script
+                        res = requests.post(
+                            WEB_APP_URL, 
+                            data=json.dumps(payload),
+                            headers={"Content-Type": "application/json"}
+                        )
+                        if res.status_code == 200:
+                            st.success(f"ตัด '{item_to_delete}' ออกไป {delete_qty} {unit_label} เรียบร้อยแล้ว!")
+                            st.cache_data.clear()
+                            st.rerun()
+                        else:
+                            st.error(f"เกิดข้อผิดพลาดในการส่งข้อมูล (Status: {res.status_code})")
+                    except Exception as e:
+                        st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ: {e}")
+    else:
+        st.info("ไม่มีวัตถุดิบในตู้เย็นให้ลบ")
 # ---------------------------------------------------------
 # TAB 2: เมนูอาหารแนะนำ (ระบบ Match คำ)
 # ---------------------------------------------------------
